@@ -23,6 +23,16 @@ EnerTask is a single-page productivity suite with a personality: a hand-rigged S
 
 No accounts. No servers. No API keys. **Your data never leaves your browser.**
 
+## ▶️ Try EnerTask
+
+> **[Open the live website →](https://tulip9zzza.github.io/EnerTask/)**
+
+Share this link with friends and try it together. EnerTask is a static client-side app: each person’s tasks, ideas, focus sessions, and streaks stay in that person’s own browser, so visitors do not share one task list.
+
+### Hosting cost note
+
+This project runs from a **public GitHub repository using GitHub Pages**, which is available with GitHub Free for public repositories [1]. Visitors using the site do not create a per-user charge for this app, and the included GitHub Actions workflow uses GitHub-hosted runners at no charge for public repositories [2]. GitHub Pages does publish soft usage limits, including **100 GB of bandwidth per month** and a recommended **1 GB site size** [3]. This app contains no backend, database, file uploads, or paid API, so normal personal and small-group use should not create a separate hosting bill; unusually high traffic may require moving to another host or adding a CDN if GitHub contacts you about usage.
+
 ---
 
 ## ✨ Features
@@ -158,3 +168,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Short version: fork → branch → PR.
 ## 📄 License
 
 [MIT](./LICENSE) — free to use, remix, and ship. Attribution appreciated, not enforced.
+
+## References
+
+[1] [GitHub Docs — Quickstart for GitHub Pages](https://docs.github.com/pages/quickstart)
+
+[2] [GitHub Docs — Billing and usage for GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration)
+
+[3] [GitHub Docs — GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)

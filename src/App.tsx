@@ -81,7 +81,7 @@ function seedStore(): Store {
     tasks: [
       { id: uid(), title: "Sketch the onboarding flow for EnerTask", tag: "design", priority: "high", done: false, createdAt: now - 5 * H },
       { id: uid(), title: "Wire up the focus timer ring", tag: "build", priority: "high", done: true, createdAt: now - 8 * H, completedAt: now - 2 * H },
-      { id: uid(), title: "Review the idea inbox — promote or compost", tag: "ritual", priority: "med", done: false, createdAt: now - 4 * H },
+      
       { id: uid(), title: "Reply to three beta growers", tag: "outreach", priority: "med", done: false, createdAt: now - 3 * H },
       { id: uid(), title: "Refill the snack drawer (carrots, obviously)", tag: "life", priority: "low", done: true, createdAt: now - 30 * H, completedAt: now - 26 * H },
     ],
@@ -99,7 +99,9 @@ function loadStore(): Store {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Store;
-      if (parsed && Array.isArray(parsed.tasks)) return parsed;
+      if (parsed && Array.isArray(parsed.tasks)) {
+        return { ...parsed, tasks: parsed.tasks.map((task) => (task.tag === "ritual" ? { ...task, tag: "" } : task)) };
+      }
     }
   } catch {
     /* corrupted → reseed */
@@ -962,6 +964,41 @@ function GrowingCarrot({ progress, active, complete, mode }: {
   );
 }
 
+function ExecutionLoopCharacter({ progress, active, complete, direction }: {
+  progress: number;
+  active: boolean;
+  complete: boolean;
+  direction: 1 | -1;
+}) {
+  const growth = complete ? 1 : Math.min(1, Math.max(0, (progress - 0.16) / 0.84));
+  const plantScale = 0.08 + (growth === 0 ? 0 : 1 - Math.pow(2, -10 * growth)) * 0.92;
+  const glow = active ? 0.08 + growth * 0.4 : 0;
+  return (
+    <svg viewBox="0 0 300 300" className="execution-loop" style={{ transform: `scaleX(${direction})` }} role="img" aria-label="Carrot Rebel focus animation">
+      <defs>
+        <filter id="execution-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+      </defs>
+      <ellipse cx="80" cy="240" rx="50" ry="10" fill="#E5E5EA" />
+      <ellipse cx="180" cy="240" rx="30" ry="6" fill="#E5E5EA" opacity="0.6" />
+      <circle cx="180" cy="230" r="45" fill="#00C888" opacity={glow} filter="url(#execution-glow)" />
+      <g className={`execution-character ${active ? "execution-character--active" : ""}`}>
+        <g className="execution-arm execution-arm--left"><path d="M 95 100 C 60 100, 50 130, 60 150" fill="none" stroke="#1C1C1E" strokeWidth="14" strokeLinecap="round" /></g>
+        <g className="execution-arm execution-arm--right"><path d="M 105 100 C 140 100, 150 130, 140 150" fill="none" stroke="#1C1C1E" strokeWidth="14" strokeLinecap="round" /></g>
+        <path d="M 100 150 C 80 180, 70 210, 80 230" fill="none" stroke="#1C1C1E" strokeWidth="18" strokeLinecap="round" className="execution-leg execution-leg--left" />
+        <path d="M 100 150 C 120 180, 130 210, 120 230" fill="none" stroke="#1C1C1E" strokeWidth="18" strokeLinecap="round" className="execution-leg execution-leg--right" />
+        <path d="M 100 90 Q 90 120 100 150" fill="none" stroke="#1C1C1E" strokeWidth="22" strokeLinecap="round" />
+        <g className="execution-head"><circle cx="100" cy="70" r="22" fill="#1C1C1E" /><g stroke="#000" strokeWidth="3.5" fill="#FAF9F6"><rect x="76" y="60" width="18" height="14" rx="2" /><rect x="106" y="60" width="18" height="14" rx="2" /><line x1="94" y1="67" x2="106" y2="67" /><line x1="68" y1="67" x2="76" y2="67" /><line x1="124" y1="67" x2="132" y2="67" /></g></g>
+        <g className="execution-hat"><path d="M 88 46 C 78 20, 122 20, 112 46 Q 100 56 88 46 Z" fill="#FF8235" /><line x1="94" y1="32" x2="106" y2="32" stroke="#D96820" strokeWidth="2" strokeLinecap="round" /><line x1="97" y1="40" x2="103" y2="40" stroke="#D96820" strokeWidth="2" strokeLinecap="round" /><path d="M 99.5 22 Q 94 14 89 6 M 100 22 Q 100 13 100 4 M 100.5 22 Q 106 14 111 6" fill="none" stroke="#00A36C" strokeWidth="6" strokeLinecap="round" /><path d="M 99 21 Q 95 15 91 8 M 100 21 Q 100 14 100 6 M 101 21 Q 105 15 109 8" fill="none" stroke="#00C888" strokeWidth="2" strokeLinecap="round" opacity="0.7" /></g>
+        <g className="execution-drops" fill="#1C1C1E"><circle cx="120" cy="140" r="3" /><circle cx="130" cy="130" r="2.5" /><circle cx="125" cy="150" r="2" /></g>
+      </g>
+      <g transform="translate(180 240)">
+        <g className="execution-plant" style={{ transform: `scale(${plantScale})`, transformOrigin: "0px 0px" }}><g transform="translate(-100 -95)"><g className="execution-plant-leaves" fill="none" strokeLinecap="round"><path d="M 99.5 22 Q 94 14 89 6" stroke="#00A36C" strokeWidth="6" /><path d="M 100 22 Q 100 13 100 4" stroke="#00A36C" strokeWidth="6" /><path d="M 100.5 22 Q 106 14 111 6" stroke="#00A36C" strokeWidth="6" /><path d="M 99 21 Q 95 15 91 8 M 100 21 Q 100 14 100 6 M 101 21 Q 105 15 109 8" stroke="#00C888" strokeWidth="2" opacity="0.7" /></g><path d="M 88 46 C 78 20, 122 20, 112 46 Q 100 100 88 46 Z" fill="#FF8235" /><line x1="94" y1="32" x2="106" y2="32" stroke="#D96820" strokeWidth="2" strokeLinecap="round" /><line x1="97" y1="40" x2="103" y2="40" stroke="#D96820" strokeWidth="2" strokeLinecap="round" /></g></g>
+        <g className="execution-dirt"><path d="M -30 2 C -15 -8, 15 -8, 30 2 C 25 8, -25 8, -30 2 Z" fill="#1C1C1E" /><path d="M -20 -1 C -10 -12, 10 -12, 20 -1 Z" fill="#1C1C1E" /><path d="M -10 -4 C -5 -14, 5 -14, 10 -4 Z" fill="#1C1C1E" /><circle cx="-14" cy="-1" r="1.5" fill="#FAF9F6" opacity="0.6" /><circle cx="16" cy="0" r="1" fill="#FAF9F6" opacity="0.8" /><circle cx="0" cy="-6" r="1.5" fill="#FAF9F6" opacity="0.9" /></g>
+      </g>
+    </svg>
+  );
+}
+
 const MODES = [
   { id: "focus", label: "Focus", secs: 25 * 60 },
   { id: "break", label: "Break", secs: 5 * 60 },
@@ -1111,10 +1148,7 @@ function FocusView({ store, stats, onComplete, toast }: {
               className="absolute bottom-0 -translate-x-1/2 transition-[left] ease-linear will-change-[left]"
               style={{ left: running ? (dir === 1 ? "78%" : "22%") : "50%", transitionDuration: running ? "3600ms" : "400ms" }}
             >
-              <Mascot pose={pose} anim={anim} className="w-[82px] sm:w-[96px]" label="Mascot pacing while focusing" />
-            </div>
-            <div className="absolute bottom-0 right-[4%] sm:right-[10%]">
-              <GrowingCarrot progress={frac} active={running} complete={celebrating} mode={mode} />
+              <ExecutionLoopCharacter progress={frac} active={running} complete={celebrating} direction={dir} />
             </div>
           </div>
         </div>

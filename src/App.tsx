@@ -983,9 +983,9 @@ function FocusView({ store, stats, onComplete, toast }: {
         <p className="label-mono mb-1.5">Time is the only real currency</p>
         <h1 className="font-display text-5xl sm:text-6xl tracking-wide leading-none mb-6">FOCUS <span className="text-carrot-deep">RUN</span></h1>
 
-        <div className="card p-6 flex flex-col items-center rise-in rise-in-1">
+        <div className="card p-5 sm:p-6 flex flex-col items-center rise-in rise-in-1">
           {/* mode pills */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
             {MODES.map((m) => (
               <button
                 key={m.id}
@@ -998,8 +998,8 @@ function FocusView({ store, stats, onComplete, toast }: {
           </div>
 
           {/* ring */}
-          <div className={`relative ${running ? "ring-running" : ""}`}>
-            <svg width="290" height="290" viewBox="0 0 290 290" className="-rotate-90">
+          <div className={`relative w-full max-w-[290px] ${running ? "ring-running" : ""}`}>
+            <svg viewBox="0 0 290 290" className="-rotate-90 h-auto w-full">
               <circle cx="145" cy="145" r={R} fill="none" stroke="#e5e5ea" strokeWidth="16" />
               <circle cx="145" cy="145" r={R} fill="none" stroke="#1c1c1e" strokeWidth="16" strokeOpacity="0.08" strokeDasharray="3 14" strokeLinecap="round" />
               <circle
@@ -1012,13 +1012,13 @@ function FocusView({ store, stats, onComplete, toast }: {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-mono font-bold text-[64px] leading-none tabular-nums">{mm}:{ss}</span>
+              <span className="font-mono font-bold text-[42px] sm:text-[56px] md:text-[64px] leading-none tabular-nums">{mm}:{ss}</span>
               <span className="label-mono mt-2">{running ? (mode === "focus" ? "crunching…" : "recharging…") : "ready when you are"}</span>
             </div>
           </div>
 
           {/* controls */}
-          <div className="flex items-center gap-3 mt-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
             <button onClick={() => setRunning((r) => !r)} className="btn-primary px-7 py-3 text-base flex items-center gap-2.5">
               {running ? <IconPause size={19} /> : <IconPlay size={19} />}
               {running ? "Pause" : left < total ? "Resume" : "Start"}
@@ -1050,10 +1050,10 @@ function FocusView({ store, stats, onComplete, toast }: {
           <div className="relative h-[140px] mt-2">
             <div className="absolute bottom-[14px] inset-x-4 border-t-2 border-dashed border-ink/25" />
             <div
-              className="absolute bottom-0 left-1/2 transition-transform ease-linear"
-              style={{ transform: `translateX(calc(-50% + ${running ? dir * 110 : 0}px))`, transitionDuration: running ? "3600ms" : "400ms" }}
+              className="absolute bottom-0 -translate-x-1/2 transition-[left] ease-linear will-change-[left]"
+              style={{ left: running ? (dir === 1 ? "78%" : "22%") : "50%", transitionDuration: running ? "3600ms" : "400ms" }}
             >
-              <Mascot pose={pose} anim={anim} className="w-[110px]" label="Mascot pacing while focusing" />
+              <Mascot pose={pose} anim={anim} className="w-[96px] sm:w-[110px]" label="Mascot pacing while focusing" />
             </div>
           </div>
         </div>

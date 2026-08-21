@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import confetti from "canvas-confetti";
 import Mascot from "./components/Mascot";
 import type { MascotAnim, Pose } from "./components/Mascot";
@@ -52,6 +53,13 @@ interface Store {
   tasks: Task[];
   ideas: Idea[];
   sessions: Session[];
+}
+interface FocusTimerState {
+  mode: ModeId;
+  left: number;
+  running: boolean;
+  dir: 1 | -1;
+  celebrating: boolean;
 }
 interface Toast {
   id: number;
@@ -149,7 +157,10 @@ function burst(big = false) {
 export default function App() {
   const [store, setStore] = useState<Store>(loadStore);
   const [view, setView] = useState<View>("today");
+  const [focusTimer, setFocusTimer] = useState<FocusTimerState>({ mode: "focus", left: 25 * 60, running: false, dir: 1, celebrating: false });
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const focusModeRef = useRef<ModeId>("focus");
+  focusModeRef.current = focusTimer.mode;
   const [cheer, setCheer] = useState(false);
   const toastId = useRef(0);
 
@@ -167,11 +178,34 @@ export default function App() {
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3000);
   }, []);
 
-  const doCheer = useCallback((ms = 2400) => {
+    const doCheer = useCallback((ms = 2400) => {
     setCheer(true);
     window.setTimeout(() => setCheer(false), ms);
   }, []);
-
+  useEffect(() => {
+    if (!focusTimer.running) return;
+    const iv = window.setInterval(() => setFocusTimer((timer) => ({ ...timer, left: Math.max(0, timer.left - 1) })), 1000);
+    return () => window.clearInterval(iv);
+  }, [focusTimer.running]);
+  useEffect(() => {
+    if (!focusTimer.running) return;
+    const iv = window.setInterval(() => setFocusTimer((timer) => ({ ...timer, dir: timer.dir === 1 ? -1 : 1 })), 3600);
+    return () => window.clearInterval(iv);
+  }, [focusTimer.running]);
+  useEffect(() => {
+    if (!focusTimer.running || focusTimer.left !== 0) return;
+    const mode = MODES.find((item) => item.id === focusModeRef.current)!;
+    setFocusTimer((timer) => ({ ...timer, running: false, celebrating: true, left: mode.secs }));
+    window.setTimeout(() => setFocusTimer((timer) => ({ ...timer, celebrating: false })), 2600);
+    beep();
+    burst(true);
+    if (mode.id === "focus") {
+      setStore((current) => ({ ...current, sessions: [{ id: uid(), minutes: Math.round(mode.secs / 60), endedAt: Date.now() }, ...current.sessions] }));
+      toast("Focus block banked. Carrots earned.", "carrot");
+    } else {
+      toast("Break over — stretch those roots", "leaf");
+    }
+  }, [focusTimer.left, focusTimer.running, toast]);
   /* ── actions ── */
   const addTask = (title: string, priority: Priority = "med", tag = "") => {
     setStore((s) => ({ ...s, tasks: [{ id: uid(), title, tag, priority, done: false, createdAt: Date.now() }, ...s.tasks] }));
@@ -282,7 +316,11 @@ export default function App() {
           <IdeasView key="ideas" store={store} onAdd={addIdea} onStar={toggleStar} onDelete={deleteIdea} onPromote={promoteIdea} />
         )}
         {view === "focus" && (
-          <FocusView key="focus" store={store} stats={stats} onComplete={(m) => { addSession(m); doCheer(3000); }} toast={toast} />
+          <FocusView key="focus" store={store} stats={stats} timer={focusTimer} setTimer={setFocusTimer} toast={toast} />
+        )}
+
+        {view !== "focus" && focusTimer.running && (
+          <MiniFocusWidget timer={focusTimer} onOpen={() => setView("focus")} />
         )}
 
         <footer className="mt-16 flex items-center justify-between gap-4 border-t-2 border-ink/10 pt-6 text-xs font-mono text-ink/50">
@@ -998,6 +1036,18 @@ function ExecutionLoopCharacter({ progress, active, complete }: {
   );
 }
 
+function MiniFocusWidget({ timer, onOpen }: { timer: FocusTimerState; onOpen: () => void }) {
+  const total = MODES.find((item) => item.id === timer.mode)!.secs;
+  const mm = String(Math.floor(timer.left / 60)).padStart(2, "0");
+  const ss = String(timer.left % 60).padStart(2, "0");
+  return (
+    <button type="button" className="focus-widget" onClick={onOpen} aria-label={`Return to ${timer.mode} timer, ${mm}:${ss} remaining`}>
+      <span className="focus-widget__art"><ExecutionLoopCharacter progress={1 - timer.left / total} active={timer.running} complete={timer.celebrating} /></span>
+      <span className="focus-widget__copy"><span className="label-mono">{timer.mode} · live</span><strong>{mm}:{ss}</strong><small>open focus</small></span>
+    </button>
+  );
+}
+
 const MODES = [
   { id: "focus", label: "Focus", secs: 25 * 60 },
   { id: "break", label: "Break", secs: 5 * 60 },
@@ -1005,57 +1055,15 @@ const MODES = [
 ] as const;
 type ModeId = (typeof MODES)[number]["id"];
 
-function FocusView({ store, stats, onComplete, toast }: {
+function FocusView({ store, stats, timer, setTimer, toast }: {
   store: Store;
   stats: { sessionsToday: number; focusToday: number };
-  onComplete: (minutes: number) => void;
+  timer: FocusTimerState;
+  setTimer: Dispatch<SetStateAction<FocusTimerState>>;
   toast: (msg: string, kind?: Toast["kind"]) => void;
 }) {
-  const [mode, setMode] = useState<ModeId>("focus");
-  const [left, setLeft] = useState(MODES[0].secs);
-  const [running, setRunning] = useState(false);
-  const [dir, setDir] = useState<1 | -1>(1);
-  const [celebrating, setCelebrating] = useState(false);
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
-
-  const switchMode = (m: ModeId) => {
-    setMode(m);
-    setLeft(MODES.find((x) => x.id === m)!.secs);
-    setRunning(false);
-  };
-
-  useEffect(() => {
-    if (!running) return;
-    const iv = window.setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => window.clearInterval(iv);
-  }, [running]);
-
-  /* pacing direction */
-  useEffect(() => {
-    if (!running) return;
-    const iv = window.setInterval(() => setDir((d) => (d === 1 ? -1 : 1)), 3600);
-    return () => window.clearInterval(iv);
-  }, [running]);
-
-  /* finish */
-  useEffect(() => {
-    if (left !== 0 || !running) return;
-    setRunning(false);
-    beep();
-    burst(true);
-    setCelebrating(true);
-    window.setTimeout(() => setCelebrating(false), 2600);
-    const m = MODES.find((x) => x.id === modeRef.current)!;
-    if (m.id === "focus") {
-      onComplete(Math.round(m.secs / 60));
-      toast("Focus block banked. Carrots earned.", "carrot");
-    } else {
-      toast("Break over — stretch those roots", "leaf");
-    }
-    setLeft(m.secs);
-  }, [left, running, onComplete, toast]);
-
+  const { mode, left, running, dir, celebrating } = timer;
+  const switchMode = (nextMode: ModeId) => setTimer({ mode: nextMode, left: MODES.find((item) => item.id === nextMode)!.secs, running: false, dir: 1, celebrating: false });
   const total = MODES.find((x) => x.id === mode)!.secs;
   const frac = 1 - left / total;
   const mm = String(Math.floor(left / 60)).padStart(2, "0");
@@ -1113,7 +1121,7 @@ function FocusView({ store, stats, onComplete, toast }: {
 
           {/* controls */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-            <button onClick={() => setRunning((r) => !r)} className="btn-primary px-7 py-3 text-base flex items-center gap-2.5">
+            <button onClick={() => setTimer((timer) => ({ ...timer, running: !timer.running }))} className="btn-primary px-7 py-3 text-base flex items-center gap-2.5">
               {running ? <IconPause size={19} /> : <IconPlay size={19} />}
               {running ? "Pause" : left < total ? "Resume" : "Start"}
             </button>
@@ -1121,7 +1129,7 @@ function FocusView({ store, stats, onComplete, toast }: {
               <IconReset size={18} />
             </button>
             {running && (
-              <button onClick={() => setLeft((s) => s + 300)} className="btn-ghost px-4 py-3 text-sm">
+              <button onClick={() => setTimer((timer) => ({ ...timer, left: timer.left + 300 }))} className="btn-ghost px-4 py-3 text-sm">
                 +5:00
               </button>
             )}

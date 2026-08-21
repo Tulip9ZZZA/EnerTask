@@ -206,6 +206,58 @@ body {
 .mascot[data-anim="cheer"] .et-hat  { animation: wobble-hat 0.5s ease-in-out infinite; }
 .mascot[data-anim="cheer"] .et-leaves { animation: sway-greens 0.5s ease-in-out infinite; }
 
+/* ── focus garden growth companion ──────────────────── */
+.growing-carrot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+  transform: translateY(5px);
+}
+.carrot-plant {
+  transition: transform 900ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.carrot-leaves {
+  transform-origin: 90px 48px;
+  transition: opacity 650ms ease-out;
+}
+.carrot-glow {
+  transition: opacity 900ms ease-out;
+}
+.growing-carrot--active .carrot-leaves {
+  animation: carrot-leaf-sway 2.4s ease-in-out infinite;
+}
+.growing-carrot--active .carrot-glow {
+  animation: carrot-glow-pulse 2.2s ease-in-out infinite;
+}
+.growing-carrot--complete .carrot-plant {
+  animation: carrot-harvest-pop 700ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.growing-carrot__label {
+  margin-top: -8px;
+  color: rgba(28, 28, 30, 0.52);
+  white-space: nowrap;
+}
+@keyframes carrot-leaf-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes carrot-glow-pulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.28; }
+}
+@keyframes carrot-harvest-pop {
+  0% { transform: translate(0, 0) scaleY(1); }
+  55% { transform: translate(0, -7px) scaleY(1.06); }
+  100% { transform: translate(0, 0) scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .growing-carrot--active .carrot-leaves,
+  .growing-carrot--active .carrot-glow,
+  .growing-carrot--complete .carrot-plant { animation: none; }
+  .carrot-plant { transition-duration: 0ms; }
+}
+
 /* ── scrollbar ───────────────────────────────────────── */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--color-paper); }

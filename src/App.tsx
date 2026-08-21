@@ -904,6 +904,47 @@ function IdeasView({ store, onAdd, onStar, onDelete, onPromote }: {
 
 /* ────────────────────────── FOCUS ────────────────────────── */
 
+function GrowingCarrot({ progress, active, complete, mode }: {
+  progress: number;
+  active: boolean;
+  complete: boolean;
+  mode: ModeId;
+}) {
+  const growth = complete ? 1 : active ? Math.min(1, Math.max(0.08, progress)) : 0.08;
+  const scaleY = 0.32 + growth * 0.68;
+  const leafOpacity = 0.35 + growth * 0.65;
+  const isRest = mode !== "focus";
+
+  return (
+    <div className={`growing-carrot ${active ? "growing-carrot--active" : ""} ${complete ? "growing-carrot--complete" : ""}`} aria-label={`${isRest ? "Break" : "Focus"} garden progress: ${Math.round(growth * 100)}%`} role="img">
+      <svg viewBox="0 0 180 150" className="w-[128px] sm:w-[150px]" aria-hidden="true">
+        <defs>
+          <filter id="carrot-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <ellipse cx="90" cy="132" rx="40" ry="8" fill="#E5E5EA" opacity="0.9" />
+        <ellipse cx="90" cy="126" rx="32" ry="10" fill="#1C1C1E" opacity="0.14" />
+        <circle cx="90" cy="82" r="34" fill={isRest ? "#00A36C" : "#00C888"} opacity={active ? 0.12 : 0} filter="url(#carrot-glow)" className="carrot-glow" />
+        <g className="carrot-plant" style={{ transform: `translate(0 ${Math.round((1 - growth) * 34)}px) scaleY(${scaleY})`, transformOrigin: "90px 124px" }}>
+          <g opacity={leafOpacity} className="carrot-leaves">
+            <path d="M90 48 Q76 28 65 18" fill="none" stroke="#00A36C" strokeWidth="8" strokeLinecap="round" />
+            <path d="M90 48 Q90 25 90 12" fill="none" stroke="#00C888" strokeWidth="8" strokeLinecap="round" />
+            <path d="M90 48 Q104 28 116 18" fill="none" stroke="#00A36C" strokeWidth="8" strokeLinecap="round" />
+            <path d="M90 43 Q78 28 70 20 M90 42 Q90 28 90 17 M91 43 Q103 28 111 20" fill="none" stroke="#8AF5C9" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+          </g>
+          <path d="M72 58 C65 42 115 42 108 58 Q102 101 90 123 Q78 101 72 58Z" fill={isRest ? "#00A36C" : "#FF8235"} />
+          <path d="M78 70 Q90 74 102 70 M81 83 Q90 86 99 83 M84 96 Q90 99 96 96" fill="none" stroke={isRest ? "#007A50" : "#D96820"} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+        </g>
+        <path d="M58 126 Q90 108 122 126 Q115 138 65 138 Q58 134 58 126Z" fill="#1C1C1E" />
+        <circle cx="73" cy="128" r="2" fill="#FAF9F6" opacity="0.7" /><circle cx="108" cy="128" r="1.5" fill="#FAF9F6" opacity="0.7" />
+      </svg>
+      <span className="label-mono growing-carrot__label">{complete ? "harvest ready" : active ? (isRest ? "roots recharging" : "growing with you") : "plant your focus"}</span>
+    </div>
+  );
+}
+
 const MODES = [
   { id: "focus", label: "Focus", secs: 25 * 60 },
   { id: "break", label: "Break", secs: 5 * 60 },
@@ -1047,13 +1088,16 @@ function FocusView({ store, stats, onComplete, toast }: {
           <div className="flex items-center gap-3 mb-1">
             <div className="flex-1"><SpeechBubble lines={lines} anim={anim} /></div>
           </div>
-          <div className="relative h-[140px] mt-2">
+          <div className="relative h-[170px] mt-2">
             <div className="absolute bottom-[14px] inset-x-4 border-t-2 border-dashed border-ink/25" />
             <div
               className="absolute bottom-0 -translate-x-1/2 transition-[left] ease-linear will-change-[left]"
               style={{ left: running ? (dir === 1 ? "78%" : "22%") : "50%", transitionDuration: running ? "3600ms" : "400ms" }}
             >
-              <Mascot pose={pose} anim={anim} className="w-[96px] sm:w-[110px]" label="Mascot pacing while focusing" />
+              <Mascot pose={pose} anim={anim} className="w-[82px] sm:w-[96px]" label="Mascot pacing while focusing" />
+            </div>
+            <div className="absolute bottom-0 right-[4%] sm:right-[10%]">
+              <GrowingCarrot progress={frac} active={running} complete={celebrating} mode={mode} />
             </div>
           </div>
         </div>

@@ -730,7 +730,7 @@ function TasksView({ store, stats, onAdd, onToggle, onDelete, onClearDone }: {
             <IconPlus size={17} /> Plant it
           </button>
         </div>
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="label-mono">Priority</span>
           <div className="flex gap-1.5">
             {(Object.keys(PRI) as Priority[]).map((p) => (

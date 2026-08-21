@@ -910,35 +910,52 @@ function GrowingCarrot({ progress, active, complete, mode }: {
   complete: boolean;
   mode: ModeId;
 }) {
-  const growth = complete ? 1 : active ? Math.min(1, Math.max(0.08, progress)) : 0.08;
-  const scaleY = 0.32 + growth * 0.68;
-  const leafOpacity = 0.35 + growth * 0.65;
   const isRest = mode !== "focus";
+  const elapsed = complete ? 1 : Math.min(1, Math.max(0, progress));
+  // Keep the plant tiny while the timer still reads roughly 20–25 minutes.
+  const growthWindow = Math.min(1, Math.max(0, (elapsed - 0.16) / 0.84));
+  const easedGrowth = growthWindow === 0 ? 0 : 1 - Math.pow(2, -10 * growthWindow);
+  const plantScale = complete ? 1 : 0.12 + easedGrowth * 0.88;
+  const glowOpacity = active ? Math.min(0.6, 0.08 + easedGrowth * 0.52) : 0;
+  const leafSway = active && easedGrowth > 0.5 ? Math.sin(easedGrowth * Math.PI * 10) * 4 : 0;
 
   return (
-    <div className={`growing-carrot ${active ? "growing-carrot--active" : ""} ${complete ? "growing-carrot--complete" : ""}`} aria-label={`${isRest ? "Break" : "Focus"} garden progress: ${Math.round(growth * 100)}%`} role="img">
-      <svg viewBox="0 0 180 150" className="w-[128px] sm:w-[150px]" aria-hidden="true">
+    <div className={`growing-carrot ${active ? "growing-carrot--active" : ""} ${complete ? "growing-carrot--complete" : ""}`} aria-label={`${isRest ? "Break" : "Focus"} garden progress: ${Math.round(elapsed * 100)}%`} role="img">
+      <svg viewBox="0 0 300 300" className="w-[128px] sm:w-[150px]" aria-hidden="true">
         <defs>
-          <filter id="carrot-glow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          <filter id="carrot-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
-        <ellipse cx="90" cy="132" rx="40" ry="8" fill="#E5E5EA" opacity="0.9" />
-        <ellipse cx="90" cy="126" rx="32" ry="10" fill="#1C1C1E" opacity="0.14" />
-        <circle cx="90" cy="82" r="34" fill={isRest ? "#00A36C" : "#00C888"} opacity={active ? 0.12 : 0} filter="url(#carrot-glow)" className="carrot-glow" />
-        <g className="carrot-plant" style={{ transform: `translate(0 ${Math.round((1 - growth) * 34)}px) scaleY(${scaleY})`, transformOrigin: "90px 124px" }}>
-          <g opacity={leafOpacity} className="carrot-leaves">
-            <path d="M90 48 Q76 28 65 18" fill="none" stroke="#00A36C" strokeWidth="8" strokeLinecap="round" />
-            <path d="M90 48 Q90 25 90 12" fill="none" stroke="#00C888" strokeWidth="8" strokeLinecap="round" />
-            <path d="M90 48 Q104 28 116 18" fill="none" stroke="#00A36C" strokeWidth="8" strokeLinecap="round" />
-            <path d="M90 43 Q78 28 70 20 M90 42 Q90 28 90 17 M91 43 Q103 28 111 20" fill="none" stroke="#8AF5C9" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+        <ellipse cx="180" cy="240" rx="30" ry="6" fill="#E5E5EA" opacity="0.6" />
+        <circle cx="180" cy="230" r="45" fill={isRest ? "#00A36C" : "#00C888"} opacity={glowOpacity} filter="url(#carrot-glow)" className="carrot-glow" />
+        <g transform="translate(180 240)">
+          <g fill="#1C1C1E" opacity="0.15"><path d="M -35 0 C -20 -15, 20 -15, 35 0 Z" /></g>
+          <g className="carrot-plant" style={{ transform: `scale(${plantScale})`, transformOrigin: "0px 0px" }}>
+            <g transform="translate(-100 -95)">
+              <g className="carrot-leaves" fill="none" strokeLinecap="round" style={{ transform: `rotate(${leafSway}deg)`, transformOrigin: "100px 22px" }}>
+                <path d="M 99.5 22 Q 94 14 89 6" stroke="#00A36C" strokeWidth="6" />
+                <path d="M 99 21 Q 95 15 91 8" stroke="#00C888" strokeWidth="2" opacity="0.7" />
+                <path d="M 100 22 Q 100 13 100 4" stroke="#00A36C" strokeWidth="6" />
+                <path d="M 100 21 Q 100 14 100 6" stroke="#00C888" strokeWidth="2" opacity="0.7" />
+                <path d="M 100.5 22 Q 106 14 111 6" stroke="#00A36C" strokeWidth="6" />
+                <path d="M 101 21 Q 105 15 109 8" stroke="#00C888" strokeWidth="2" opacity="0.7" />
+              </g>
+              <g>
+                <path d="M 88 46 C 78 20, 122 20, 112 46 Q 100 100 88 46 Z" fill={isRest ? "#00A36C" : "#FF8235"} />
+                <line x1="94" y1="32" x2="106" y2="32" stroke={isRest ? "#007A50" : "#D96820"} strokeWidth="2" strokeLinecap="round" />
+                <line x1="97" y1="40" x2="103" y2="40" stroke={isRest ? "#007A50" : "#D96820"} strokeWidth="2" strokeLinecap="round" />
+              </g>
+            </g>
           </g>
-          <path d="M72 58 C65 42 115 42 108 58 Q102 101 90 123 Q78 101 72 58Z" fill={isRest ? "#00A36C" : "#FF8235"} />
-          <path d="M78 70 Q90 74 102 70 M81 83 Q90 86 99 83 M84 96 Q90 99 96 96" fill="none" stroke={isRest ? "#007A50" : "#D96820"} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+          <g className="carrot-dirt-front">
+            <path d="M -30 2 C -15 -8, 15 -8, 30 2 C 25 8, -25 8, -30 2 Z" fill="#1C1C1E" />
+            <path d="M -20 -1 C -10 -12, 10 -12, 20 -1 Z" fill="#1C1C1E" />
+            <path d="M -10 -4 C -5 -14, 5 -14, 10 -4 Z" fill="#1C1C1E" />
+            <circle cx="-14" cy="-1" r="1.5" fill="#FAF9F6" opacity="0.6" /><circle cx="16" cy="0" r="1" fill="#FAF9F6" opacity="0.8" /><circle cx="0" cy="-6" r="1.5" fill="#FAF9F6" opacity="0.9" />
+          </g>
         </g>
-        <path d="M58 126 Q90 108 122 126 Q115 138 65 138 Q58 134 58 126Z" fill="#1C1C1E" />
-        <circle cx="73" cy="128" r="2" fill="#FAF9F6" opacity="0.7" /><circle cx="108" cy="128" r="1.5" fill="#FAF9F6" opacity="0.7" />
       </svg>
       <span className="label-mono growing-carrot__label">{complete ? "harvest ready" : active ? (isRest ? "roots recharging" : "growing with you") : "plant your focus"}</span>
     </div>

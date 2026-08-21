@@ -964,17 +964,16 @@ function GrowingCarrot({ progress, active, complete, mode }: {
   );
 }
 
-function ExecutionLoopCharacter({ progress, active, complete, direction }: {
+function ExecutionLoopCharacter({ progress, active, complete }: {
   progress: number;
   active: boolean;
   complete: boolean;
-  direction: 1 | -1;
 }) {
-  const growth = complete ? 1 : Math.min(1, Math.max(0, (progress - 0.16) / 0.84));
-  const plantScale = 0.08 + (growth === 0 ? 0 : 1 - Math.pow(2, -10 * growth)) * 0.92;
-  const glow = active ? 0.08 + growth * 0.4 : 0;
+  const growth = complete ? 1 : Math.min(1, Math.max(0, (progress - 0.2) / 0.8));
+  const plantScale = 0.1 + growth * 0.9;
+  const glow = active && growth > 0.55 ? 0.12 + ((growth - 0.55) / 0.45) * 0.58 : 0;
   return (
-    <svg viewBox="0 0 300 300" className="execution-loop" style={{ transform: `scaleX(${direction})` }} role="img" aria-label="Carrot Rebel focus animation">
+    <svg viewBox="0 0 300 300" className="execution-loop" role="img" aria-label="Carrot Rebel focus animation">
       <defs>
         <filter id="execution-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
       </defs>
@@ -1145,10 +1144,9 @@ function FocusView({ store, stats, onComplete, toast }: {
           <div className="relative h-[170px] mt-2">
             <div className="absolute bottom-[14px] inset-x-4 border-t-2 border-dashed border-ink/25" />
             <div
-              className="absolute bottom-0 -translate-x-1/2 transition-[left] ease-linear will-change-[left]"
-              style={{ left: running ? (dir === 1 ? "78%" : "22%") : "50%", transitionDuration: running ? "3600ms" : "400ms" }}
+              className="absolute inset-x-0 bottom-0 flex justify-center"
             >
-              <ExecutionLoopCharacter progress={frac} active={running} complete={celebrating} direction={dir} />
+              <ExecutionLoopCharacter progress={frac} active={running} complete={celebrating} />
             </div>
           </div>
         </div>

@@ -72,6 +72,26 @@ Static hosting friendly: GitHub Pages, Netlify, Vercel, Cloudflare Pages — jus
 
 ---
 
+## 🚢 Publish to GitHub (one command)
+
+1. Create an **empty** repo named `enertask` on [github.com/new](https://github.com/new) — no README, no license checkbox; this repo brings its own.
+2. Run the launch script from the project root:
+
+```bash
+chmod +x publish.sh
+./publish.sh your-github-username
+```
+
+The script inits git, commits everything, wires the remote, and pushes `main`. Git will ask you to authenticate once (browser SSO, PAT, or SSH).
+
+**Then flip it open source + go live:**
+
+- Repo → **Settings → General** → switch visibility to **Public**
+- Repo → **Settings → Pages → Source: "GitHub Actions"**
+- The included workflow (`.github/workflows/deploy.yml`) auto-builds on every push to `main` — your live demo lands at `https://your-username.github.io/enertask/` in about a minute, and every future push redeploys it.
+
+---
+
 ## 🧱 Tech Stack
 
 | Layer | Choice |
@@ -104,14 +124,16 @@ The entire visual language is extracted from the mascot rig itself:
 ## 📁 Project Structure
 
 ```
-├── index.html              # entry, meta, fonts, favicon
+├── index.html                  # entry, meta, fonts, favicon
 ├── src/
-│   ├── main.tsx            # React root
-│   ├── App.tsx             # app shell, store, all four views
-│   ├── index.css           # Tailwind + brand tokens + keyframes
+│   ├── main.tsx                # React root
+│   ├── App.tsx                 # app shell, store, all four views
+│   ├── index.css               # Tailwind + brand tokens + keyframes
 │   └── components/
-│       ├── Mascot.tsx      # the Carrot Rebel — 4-pose SVG rig
-│       └── Icons.tsx       # hand-drawn stroke icon set + logo mark
+│       ├── Mascot.tsx          # the Carrot Rebel — 4-pose SVG rig
+│       └── Icons.tsx           # hand-drawn stroke icon set + logo mark
+├── .github/workflows/deploy.yml  # auto-deploy to GitHub Pages on push
+├── publish.sh                  # one-command GitHub publish script
 ├── LICENSE
 ├── CONTRIBUTING.md
 └── README.md
